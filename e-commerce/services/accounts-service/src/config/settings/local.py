@@ -1,17 +1,14 @@
 from .base import *  # noqa
+from pathlib import Path
 DEBUG = True
 
 import os
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "ecommerce"),
-        "USER": os.getenv("DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
-        "PORT": os.getenv("DB_PORT", "5432"),
-        "OPTIONS": {
-            "options": f"-c search_path{os.getenv('DB_SCHEMA', 'public')}"
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
