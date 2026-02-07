@@ -9,6 +9,7 @@ class Order(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    id = models.AutoField(primary_key=True)
     user_id = models.UUIDField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
