@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register(r"categories", CategoryViewSet, basename="category")
-router.register(r"products", ProductViewSet.as_view, basename='product')
+router.register(r"products", ProductViewSet, basename='product')
 
 urlpatterns = [
     path("health/", HealthView.as_view(), name="health"),
