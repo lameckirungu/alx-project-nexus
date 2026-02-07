@@ -42,8 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'orders',
     'rest_framework',
+    'drf_spectacular',
+    'orders',
 ]
 
 MIDDLEWARE = [
@@ -128,4 +129,11 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Orders Service API",
+    "DESCRIPTION": "Orders service endpoints for managing orders and order items.",
+    "VERSION": "1.0.0",
 }
