@@ -41,8 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
     'rest_framework',
+    'drf_spectacular',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -127,4 +128,11 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Accounts Service API",
+    "DESCRIPTION": "Accounts service endpoints for users and profiles.",
+    "VERSION": "1.0.0",
 }
