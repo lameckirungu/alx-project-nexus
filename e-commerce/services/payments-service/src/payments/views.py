@@ -1,5 +1,5 @@
 import uuid
-from rest_framework import viewsets, status
+from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema
 
 from .models import Payment, Transaction
 from .serializers import PaymentSerializer, TransactionSerializer
+from .permissions import IsOwner
 
 
 class HealthView(APIView):
@@ -26,6 +27,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
     """
     queryset = Payment.objects.all().order_by("-created_at")
     serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        user_id = str(getattr(self.request.user, "id", ""))
+        return Payment.objects.filter(user_id=user_id).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user_id=str(getattr(self.request.user, "id", "")))
 
     @extend_schema(summary="List payments", description="Retrieve all payments.")
     def list(self, request, *args, **kwargs):
@@ -54,11 +63,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
         """
         order_id = request.data.get("order_id")
         amount = request.data.get("amount")
+        user_id = request.data.get("user_id") or str(getattr(request.user, "id", ""))
 
         if not order_id or not amount:
             return Response({"detail": "order_id and amount required"}, status=400)
 
         payment = Payment.objects.create(
+            user_id=user_id,
             order_id=order_id,
             amount=amount,
             method=request.data.get("method", "card"),

@@ -15,6 +15,7 @@ class Payment(models.Model):
         ("mobile", "Mobile Money"),
     ]
 
+    user_id = models.CharField(max_length=64, null=True, blank=True)
     order_id = models.CharField(max_length=64)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     method = models.CharField(max_length=20, choices=METHOD_CHOICES, default="mobile")
@@ -24,6 +25,7 @@ class Payment(models.Model):
 
     class Meta:
         indexes = [
+            models.Index(fields=["user_id"]),
             models.Index(fields=["order_id"]),
             models.Index(fields=["status"]),
         ]
