@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "service/**"
+      - "feature/**"
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - accounts
+          - cart
+          - catalog
+          - orders
+          - payments
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install --no-cache-dir poetry
+
+      - name: Install dependencies
+        working-directory: e-commerce/services/${{ matrix.service }}-service
+        run: |
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-ansi
+
+      - name: Run tests
+        working-directory: e-commerce/services/${{ matrix.service }}-service
+        run: poetry run python src/manage.py test ${{ matrix.service }}
