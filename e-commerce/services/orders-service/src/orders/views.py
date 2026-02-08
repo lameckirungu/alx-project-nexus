@@ -2,7 +2,7 @@ import requests
 from decimal import Decimal
 from django.conf import settings
 from rest_framework.decorators import action
-from rest_framework import viewsets, status
+from rest_framework import permissions, viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,6 +10,7 @@ from drf_spectacular.utils import extend_schema
 
 from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderItemSerializer
+from .permissions import IsOwner
 
 
 class HealthView(APIView):
@@ -30,6 +31,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     """
     queryset = Order.objects.all().order_by("-created_at")
     serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        user_id = str(getattr(self.request.user, "id", ""))
+        return Order.objects.filter(user_id=user_id).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user_id=str(getattr(self.request.user, "id", "")))
 
     @extend_schema(
         summary="List all orders",
@@ -78,7 +87,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             "cart_id": "<uuid>"
         }
         """
-        user_id = request.data.get("user_id")
+        user_id = str(getattr(request.user, "id", ""))
         cart_id = request.data.get("cart_id")
 
         if not user_id or not cart_id:
@@ -117,6 +126,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         payment_resp = requests.post(
             payments_url,
             json={
+                "user_id": user_id,
                 "order_id": str(order.id),
                 "amount": float(total),
                 "method": "card",
@@ -145,6 +155,11 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     """
     queryset = OrderItem.objects.select_related("order").all()
     serializer_class = OrderItemSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        user_id = str(getattr(self.request.user, "id", ""))
+        return OrderItem.objects.select_related("order").filter(order__user_id=user_id)
 
     @extend_schema(
         summary="List all order items",

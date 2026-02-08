@@ -2,11 +2,25 @@ from rest_framework.test import APITestCase
 import json
 
 
+class TestUser:
+    def __init__(self, user_id):
+        self.id = user_id
+
+    @property
+    def is_authenticated(self):
+        return True
+
+
 class TestCartApi(APITestCase):
+    def setUp(self):
+        self.client.force_authenticate(
+            user=TestUser("11111111-1111-1111-1111-111111111111")
+        )
+
     def test_create_cart(self):
         response = self.client.post(
             "/api/cart/carts/",
-            {"user_id": "11111111-1111-1111-1111-111111111111"},
+            {},
             format="json",
         )
         self.assertEqual(response.status_code, 201)
@@ -16,7 +30,7 @@ class TestCartApi(APITestCase):
     def test_add_item_and_total(self):
         cart_response = self.client.post(
             "/api/cart/carts/",
-            {"user_id": "11111111-1111-1111-1111-111111111111"},
+            {},
             format="json",
         )
         cart_data = json.loads(cart_response.content)
