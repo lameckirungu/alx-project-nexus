@@ -1,5 +1,6 @@
-from django.shortcuts import render
-from rest_framework import viewsets
+import uuid
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -38,7 +39,35 @@ class PaymentViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
+    
+    @action(detail=False, methods=["post"])
+    def create_for_order(self, request):
+        """
+        Create a payment for an order.
 
+        Body:
+        {
+            "order_id": "<uuid>",
+            "amount": 100.00,
+            "method": "card"
+        }
+        """
+        order_id = request.data.get("order_id")
+        amount = request.data.get("amount")
+
+        if not order_id or not amount:
+            return Response({"detail": "order_id and amount required"}, status=400)
+
+        payment = Payment.objects.create(
+            order_id=order_id,
+            amount=amount,
+            method=request.data.get("method", "card"),
+            status="pending",
+            reference=str(uuid.uuid4()),
+        )
+        return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
+    
+    
 class TransactionViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing payment transactions.

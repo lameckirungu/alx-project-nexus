@@ -1,4 +1,8 @@
-from rest_framework import viewsets
+import requests
+from decimal import Decimal
+from django.conf import settings
+from rest_framework.decorators import action
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -61,6 +65,76 @@ class OrderViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+    
+    
+    @action(detail=False, methods=["post"])
+    def checkout(self, request):
+        """
+        Create an order from cart items.
+
+        Body:
+        {
+            "user_id": "<uuid>",
+            "cart_id": "<uuid>"
+        }
+        """
+        user_id = request.data.get("user_id")
+        cart_id = request.data.get("cart_id")
+
+        if not user_id or not cart_id:
+            return Response({"detail": "user_id and cart_id required"}, status=400)
+
+        cart_url = f"{settings.CART_SERVICE_URL}/api/cart/carts/{cart_id}/"
+        cart_resp = requests.get(cart_url)
+
+        if cart_resp.status_code != 200:
+            return Response({"detail": "Cart not found"}, status=404)
+
+        cart_data = cart_resp.json()
+        items = cart_data.get("items", [])
+        total = sum(
+            Decimal(str(item["unit_price"])) * int(item["quantity"])
+            for item in items
+        )
+
+        order = Order.objects.create(
+            user_id=user_id,
+            status="pending",
+            total_amount=total,
+            shipping_address=request.data.get("shipping_address", ""),
+        )
+
+        for item in items:
+            OrderItem.objects.create(
+                order=order,
+                product_id=item["product_id"],
+                product_name=item["product_name"],
+                unit_price=Decimal(str(item["unit_price"])),
+                quantity=int(item["quantity"]),
+            )
+
+        payments_url = f"{settings.PAYMENTS_SERVICE_URL}/api/payments/payments/create_for_order/"
+        payment_resp = requests.post(
+            payments_url,
+            json={
+                "order_id": str(order.id),
+                "amount": float(total),
+                "method": "card",
+            },
+            timeout=5,
+        )
+
+        if not payment_resp.ok:
+            return Response(
+                {
+                    "detail": "Payment creation failed",
+                    "payment_status": payment_resp.status_code,
+                    "payment_body": payment_resp.text,
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)     
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
