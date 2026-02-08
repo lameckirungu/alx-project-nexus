@@ -137,3 +137,6 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Orders service endpoints for managing orders and order items.",
     "VERSION": "1.0.0",
 }
+
+CART_SERVICE_URL = "http://localhost:8002"
+PAYMENTS_SERVICE_URL = "http://localhost:8005"
