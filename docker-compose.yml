@@ -1,0 +1,131 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  accounts-service:
+    build:
+      context: ./e-commerce/services/accounts-service
+    ports:
+      - "8001:8000"
+    environment:
+      SECRET_KEY: "dev-secret-key"
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DB_ENGINE: "django.db.backends.postgresql"
+      DB_NAME: "accounts"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+    command: >
+      sh -c "python src/manage.py migrate && python src/manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - postgres
+
+  cart-service:
+    build:
+      context: ./e-commerce/services/cart-service
+    ports:
+      - "8002:8000"
+    environment:
+      SECRET_KEY: "dev-secret-key"
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DB_ENGINE: "django.db.backends.postgresql"
+      DB_NAME: "cart"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+    command: >
+      sh -c "python src/manage.py migrate && python src/manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - accounts-service
+      - postgres
+
+  catalog-service:
+    build:
+      context: ./e-commerce/services/catalog-service
+    ports:
+      - "8003:8000"
+    environment:
+      SECRET_KEY: "dev-secret-key"
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DB_ENGINE: "django.db.backends.postgresql"
+      DB_NAME: "catalog"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+    command: >
+      sh -c "python src/manage.py migrate && python src/manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - postgres
+
+  orders-service:
+    build:
+      context: ./e-commerce/services/orders-service
+    ports:
+      - "8004:8000"
+    environment:
+      SECRET_KEY: "dev-secret-key"
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DB_ENGINE: "django.db.backends.postgresql"
+      DB_NAME: "orders"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      CART_SERVICE_URL: "http://cart-service:8000"
+      PAYMENTS_SERVICE_URL: "http://payments-service:8000"
+    command: >
+      sh -c "python src/manage.py migrate && python src/manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - cart-service
+      - payments-service
+      - postgres
+
+  payments-service:
+    build:
+      context: ./e-commerce/services/payments-service
+    ports:
+      - "8005:8000"
+    environment:
+      SECRET_KEY: "dev-secret-key"
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DB_ENGINE: "django.db.backends.postgresql"
+      DB_NAME: "payments"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+    command: >
+      sh -c "python src/manage.py migrate && python src/manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - postgres
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - accounts-service
+      - cart-service
+      - catalog-service
+      - orders-service
+      - payments-service
+
+volumes:
+  postgres_data:
