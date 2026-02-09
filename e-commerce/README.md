@@ -1,110 +1,98 @@
-# E-Commerce Backend API
+# E-Commerce Backend API (Microservices)
 
-Many SMEs need a secure, scalable backend to manage products, users, carts, and payments without building everything from scratch.
-This project aims to build a production-ready e-commerce backend API that supports core shipping workflows and can be consumed by any frontend (web or mobile).
+This project implements an e-commerce backend split into independent services for accounts, catalog, cart, orders, and payments. Each service exposes a REST API and has its own database schema.
 
-## Project Objectives
+## Services and Base Paths
 
-- Build a RESTful backend API for an e-commerce platform
-- Implement secure authentication and authorization
-- Support product discovery, cart management, and payments
-- Deploy the API using AWS serverless services
-- Provide clear API documentation for frontend integration
+- Accounts: `/api/accounts/`
+- Catalog: `/api/catalog/`
+- Cart: `/api/cart/`
+- Orders: `/api/orders/`
+- Payments: `/api/payments/`
 
-## Core Features
+Each service provides:
 
-### 1. Authentication and Users
+- `GET /health/`
+- Swagger UI: `/api/docs/`
+- OpenAPI schema: `/api/schema/`
 
-- User registration and login
-- JWT-based authentication
-- Role-based access (admin vs customer)
+See `docs/API.md` for full endpoint coverage and examples.
 
-_**Endpoints**_
+## Current Features (Implemented)
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET  /auth/profile`
+- JWT authentication (accounts) with token refresh.
+- User profile management with auto-created profile.
+- Product and category CRUD.
+- Cart and cart item CRUD with ownership checks.
+- Order and order item CRUD with checkout flow.
+- Payment and transaction records.
+- Service-to-service calls from orders to cart and payments.
+- API docs via drf-spectacular.
 
-### 2. Product & Category Management
+## Planned / Not Yet Implemented
 
-- CRUD operations for products
-- Product categorization
-- Filtering, sorting, and pagination
-- Admin-only product management
+- Role-based access (admin vs customer).
+- Filtering/sorting/pagination for catalog.
+- Stripe integration and payment webhooks.
+- Production-grade async tasks (Celery/queues).
+- Full production hardening (rate limiting, audit logs, etc.).
 
-_**Endpoints**_
+## Run Locally (Docker Compose)
 
-```http
-GET /products
-POST /products # admin
-GET /products/{id}
-PUT /products/{id} # admin
-DELETE /products/{id} # admin
+From repo root:
+
+```bash
+docker compose up --build
 ```
 
-### 3. Cart Management
+Gateway (Nginx) routes all services on:
 
-- Add products to cart
-- Remove products from cart
-- View cart contents
-- Update product quantities
+- `http://localhost:8080/api/<service>/...`
 
-_**Endpoints**_
+Direct service ports (if needed):
 
-```http
-POST /cart/add
-POST /cart/remove
-GET /cart
-```
+- Accounts: `http://localhost:8001`
+- Cart: `http://localhost:8002`
+- Catalog: `http://localhost:8003`
+- Orders: `http://localhost:8004`
+- Payments: `http://localhost:8005`
 
-### 4. Orders & Payments
-- Checkout process
-- Payment processing using stripe
-- Order creation after successful payment
-- Order history per user
+## Deployment
 
-_**Endpoints**_
+### EC2 (Docker Compose)
 
-```http
-POST /checkout
-GET /orders
-GET /orders/{id}
-```
+1. Clone the repo on EC2.
+2. Run:
 
-### 5. API Documentation
+   ```bash
+   docker compose up -d --build
+   ```
+3. Access via the EC2 public IP:
 
-- Swagger documentation
-- Publicly accessible API docs
-- Example requests and responses
+   - Gateway: `http://<EC2_PUBLIC_IP>/api/...` (if Nginx mapped to port 80)
 
-## Technologies & Tools
+### Railway
 
-_Backend_
+- Create one service per microservice.
+- Set Root Directory to each service folder:
+  - `e-commerce/services/accounts-service` (repeat for others).
+- Use Docker build.
+- Start command:
 
-- Python
-- Django + Django REST Framework
-- JWT Authentication
+  ```bash
+  python src/manage.py migrate && python src/manage.py runserver 0.0.0.0:$PORT
+  ```
 
-_Database_
+### Render
 
-- PostgreSQL (AWS RDS)
-- Indexed fields for performance
+- Create one web service per microservice.
+- Root Directory = each service folder.
+- Docker build.
+- Set env vars per service (DB, SECRET_KEY, ALLOWED_HOSTS).
 
-_Cloud & Deployment_
+## Tech Stack
 
-- AWS Lambda
-- AWS API Gateway
-- AWS IAM
-- AWS CloudWatch (logs)
-
-_Payments_
-
-- Stripe API
-
-_Testing_
-
-- Postman
-
-_Version Control_
-
-- Git & GitHub
+- Python, Django, Django REST Framework
+- drf-spectacular for OpenAPI
+- PostgreSQL (local via Docker; managed DB for production)
+- Docker + Docker Compose

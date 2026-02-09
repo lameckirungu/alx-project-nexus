@@ -9,6 +9,10 @@ If you run Nginx gateway (recommended):
 - Base URL: `http://<EC2_PUBLIC_IP>`
 - Example: `http://<EC2_PUBLIC_IP>/api/catalog/health/`
 
+Deployed for evaluation:
+
+- Base URL: `http://54.161.28.134/`
+
 If you expose each service port directly (no gateway):
 
 - Accounts: `http://<EC2_PUBLIC_IP>:8001`
@@ -53,7 +57,6 @@ Content-Type: application/json
 ```
 
 Response:
-
 ```json
 {
   "access": "<jwt>",
