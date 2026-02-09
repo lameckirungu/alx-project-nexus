@@ -24,7 +24,6 @@ If you expose each service port directly (no gateway):
 Security group rules must allow inbound traffic on the ports you use. If you use the gateway, open port `80` (and optionally `443`). If you expose services directly, open `8001-8005`.
 
 ## Overview
-
 This project is a microservices-based e-commerce backend. Each service exposes a REST API and is deployed independently.
 
 Local base URLs:
@@ -66,9 +65,11 @@ Response:
 ```
 
 ## Accounts Service
+
 Base path: `/api/accounts/`
 
 Endpoints:
+
 - `GET /health/`
 - `POST /register/`
 - `POST /auth/login/`
@@ -83,6 +84,7 @@ Endpoints:
 - `DELETE /profiles/{id}/`
 
 Register example:
+
 ```http
 POST /api/accounts/register/
 Content-Type: application/json
@@ -97,9 +99,11 @@ Content-Type: application/json
 ```
 
 ## Catalog Service
+
 Base path: `/api/catalog/`
 
 Endpoints:
+
 - `GET /health/`
 - `GET /categories/`
 - `POST /categories/`
@@ -115,9 +119,11 @@ Endpoints:
 - `DELETE /products/{id}/`
 
 ## Cart Service
+
 Base path: `/api/cart/`
 
 Endpoints:
+
 - `GET /health/`
 - `GET /carts/`
 - `POST /carts/`
@@ -131,6 +137,7 @@ Endpoints:
 - `DELETE /items/{id}/`
 
 Example add item:
+
 ```http
 POST /api/cart/items/
 Authorization: Bearer <jwt>
@@ -146,9 +153,11 @@ Content-Type: application/json
 ```
 
 ## Orders Service
+
 Base path: `/api/orders/`
 
 Endpoints:
+
 - `GET /health/`
 - `GET /orders/`
 - `POST /orders/`
@@ -161,6 +170,7 @@ Endpoints:
 - `GET /items/{id}/`
 
 Checkout example:
+
 ```http
 POST /api/orders/orders/checkout/
 Authorization: Bearer <jwt>
@@ -173,9 +183,11 @@ Content-Type: application/json
 ```
 
 ## Payments Service
+
 Base path: `/api/payments/`
 
 Endpoints:
+
 - `GET /health/`
 - `GET /payments/`
 - `POST /payments/`
@@ -185,6 +197,7 @@ Endpoints:
 - `POST /transactions/`
 
 Example create payment for order:
+
 ```http
 POST /api/payments/payments/create_for_order/
 Authorization: Bearer <jwt>
@@ -198,6 +211,7 @@ Content-Type: application/json
 ```
 
 ## Example Usage (Postman / Frontend)
+
 1. Register a user via Accounts service.
 2. Login to get a JWT.
 3. Use `Authorization: Bearer <jwt>` for Cart, Orders, and Payments.
