@@ -17,12 +17,26 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
+            echo "Starting deployment..."
+            
             APP_DIR=/home/${{ secrets.EC2_USER }}/alx-project-nexus
+            
+            # Clone repo if it doesn't exist
             if [ ! -d "$APP_DIR/.git" ]; then
-              git clone ${{ secrets.REPO_URL }} "$APP_DIR"
+              echo "Cloning repository..."
+              git clone https://github.com/lameckirungu/alx-project-nexus.git "$APP_DIR"
             fi
+            
+            # Navigate and update
             cd "$APP_DIR"
+            echo "Fetching latest changes..."
             git fetch --all
             git checkout main
-            git pull origin main
+            git reset --hard origin/main  # Force update to match remote
+            
+            # Deploy with Docker
+            echo "Starting Docker containers..."
+            docker compose down
             docker compose up -d --build
+            
+            echo "Deployment completed successfully!"
